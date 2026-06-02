@@ -1,0 +1,60 @@
+﻿{% extends "base.html" %}
+{% block title %}首页 - 校园失物招领{% endblock %}
+{% block content %}
+<div class="hero">
+    <h1>校园失物招领平台</h1>
+    <p>捡到东西？丢失物品？在这里发布和寻找</p>
+    <form action="{{ url_for('items.search') }}" method="get" class="search-form">
+        <input type="text" name="q" placeholder="搜索物品名称、描述、地点..." class="search-input">
+        <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+</div>
+
+<div class="filter-bar">
+    <a href="{{ url_for('items.index') }}" class="btn btn-sm {% if not current_type %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+    <a href="{{ url_for('items.index', type='lost') }}" class="btn btn-sm {% if current_type == 'lost' %}btn-primary{% else %}btn-outline{% endif %}">寻物启事</a>
+    <a href="{{ url_for('items.index', type='found') }}" class="btn btn-sm {% if current_type == 'found' %}btn-primary{% else %}btn-outline{% endif %}">失物招领</a>
+    {% for cat in categories %}
+        <a href="{{ url_for('items.index', category=cat, type=current_type) }}" class="btn btn-sm {% if current_category == cat %}btn-primary{% else %}btn-outline{% endif %}">{{ cat }}</a>
+    {% endfor %}
+</div>
+
+<div class="item-grid">
+    {% for item in items.items %}
+    <div class="item-card">
+        <a href="{{ url_for('items.item_detail', item_id=item.id) }}">
+            {% set first_img = item.images.first() %}
+            {% if first_img %}
+                <img src="{{ url_for('static', filename='uploads/' + first_img.filename) }}" alt="{{ item.title }}" class="item-img">
+            {% else %}
+                <div class="item-img-placeholder">📦</div>
+            {% endif %}
+            <div class="item-info">
+                <span class="badge badge-{{ item.item_type }}">{{ '寻物' if item.item_type == 'lost' else '招领' }}</span>
+                <span class="badge badge-status">{{ item.status }}</span>
+                <h3>{{ item.title }}</h3>
+                <p class="item-meta">{{ item.category }} · {{ item.location }}</p>
+                <p class="item-date">{{ item.found_date.strftime('%Y-%m-%d') }}</p>
+            </div>
+        </a>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>📭 暂无物品信息</p>
+        <a href="{{ url_for('items.publish') }}" class="btn btn-primary">发布第一条信息</a>
+    </div>
+    {% endfor %}
+</div>
+
+{% if items.pages > 1 %}
+<div class="pagination">
+    {% if items.has_prev %}
+        <a href="{{ url_for('items.index', page=items.prev_num, type=current_type, category=current_category) }}" class="btn btn-sm btn-outline">上一页</a>
+    {% endif %}
+    <span class="page-info">第 {{ items.page }} / {{ items.pages }} 页</span>
+    {% if items.has_next %}
+        <a href="{{ url_for('items.index', page=items.next_num, type=current_type, category=current_category) }}" class="btn btn-sm btn-outline">下一页</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
