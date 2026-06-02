@@ -1,0 +1,16 @@
+﻿name: Deploy to Render
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          echo "Deploying campus-lost-found to Render..."
+          echo "Visit: https://dashboard.render.com/select-repo?type=blueprint"
+          echo "Or open: https://render.com/deploy?repo=https://github.com/tty710/campus-lost-found"
