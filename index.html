@@ -1,0 +1,558 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校园失物招领平台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f4f8;color:#2d3748;min-height:100vh}
+a{color:#3182ce;text-decoration:none}
+.navbar{background:linear-gradient(135deg,#1a365d,#2c5282);color:#fff;padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;height:56px;justify-content:space-between;flex-wrap:wrap}
+.nav-brand{font-size:1.15em;font-weight:700;color:#fff;cursor:pointer}
+.nav-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.nav-tabs a,.nav-tabs span{color:#e2e8f0;padding:6px 12px;border-radius:6px;font-size:.88em;cursor:pointer;transition:.2s}
+.nav-tabs a:hover,.nav-tabs span:hover{background:rgba(255,255,255,.15)}
+.nav-user{color:#bee3f8;font-weight:600;padding:6px 8px}
+.container{max-width:1100px;margin:0 auto;padding:20px;width:100%}
+.btn{display:inline-block;padding:10px 20px;border:none;border-radius:8px;font-size:.93em;cursor:pointer;transition:.2s;font-family:inherit}
+.btn-primary{background:#3182ce;color:#fff}.btn-primary:hover{background:#2b6cb0}
+.btn-success{background:#38a169;color:#fff}.btn-success:hover{background:#2f855a}
+.btn-danger{background:#e53e3e;color:#fff}.btn-danger:hover{background:#c53030}
+.btn-outline{background:#fff;color:#4a5568;border:2px solid #cbd5e0}.btn-outline:hover{background:#edf2f7}
+.btn-sm{padding:5px 14px;font-size:.82em}.btn-block{width:100%}
+.alert{padding:12px 18px;border-radius:8px;margin-bottom:14px;font-size:.92em;display:none}
+.alert-success{background:#c6f6d5;color:#22543d;border:1px solid #9ae6b4}
+.alert-danger{background:#fed7d7;color:#742a2a;border:1px solid #feb2b2}
+.alert-info{background:#bee3f8;color:#2a4365;border:1px solid #90cdf4}
+.hero{background:linear-gradient(135deg,#2b6cb0,#3182ce);color:#fff;text-align:center;padding:44px 20px;border-radius:12px;margin-bottom:20px}
+.hero h1{font-size:1.8em;margin-bottom:6px}.hero p{opacity:.9;margin-bottom:20px}
+.search-box{display:flex;max-width:500px;margin:0 auto;gap:8px}
+.search-box input{flex:1;padding:10px 14px;border:none;border-radius:8px;font-size:.95em;outline:none}
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.filter-bar .btn{padding:5px 14px;font-size:.82em}
+.item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.item-card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer;transition:.2s}
+.item-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.item-card img{width:100%;height:160px;object-fit:cover;background:#e2e8f0}
+.item-card .no-img{width:100%;height:160px;display:flex;align-items:center;justify-content:center;background:#edf2f7;font-size:3em}
+.item-info{padding:12px}.item-info h3{font-size:1em;margin-bottom:4px}
+.item-info .meta{font-size:.82em;color:#718096}.item-info .date{font-size:.78em;color:#a0aec0;margin-top:2px}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.76em;font-weight:600;margin-right:4px;background:#e2e8f0;color:#4a5568}
+.badge-lost{background:#fed7d7;color:#c53030}.badge-found{background:#c6f6d5;color:#276749}
+.badge-pending{background:#fefcbf;color:#744210}.badge-approved{background:#c6f6d5;color:#22543d}
+.badge-rejected{background:#fed7d7;color:#742a2a}.badge-returned{background:#bee3f8;color:#2a4365}
+.form-panel{max-width:520px;margin:20px auto;background:#fff;padding:28px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.form-panel h2{text-align:center;margin-bottom:20px;color:#1a365d}
+.form-group{margin-bottom:16px}.form-group label{display:block;font-weight:600;margin-bottom:5px;color:#4a5568}
+.form-input{width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:.93em;font-family:inherit;transition:.2s}
+.form-input:focus{outline:none;border-color:#3182ce;box-shadow:0 0 0 3px rgba(49,130,206,.15)}
+textarea.form-input{resize:vertical;min-height:80px}
+select.form-input{background:#fff}
+.radio-group label{display:block;font-weight:400;margin:5px 0}
+.detail-panel{max-width:800px;margin:20px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.detail-header{display:flex;gap:20px;flex-wrap:wrap}
+.detail-gallery{flex:1 1 280px;max-width:380px}
+.detail-gallery img{width:100%;border-radius:8px;max-height:300px;object-fit:cover}
+.detail-gallery .no-img{width:100%;height:220px;display:flex;align-items:center;justify-content:center;background:#edf2f7;border-radius:8px;font-size:4em}
+.detail-meta{flex:1 1 260px}.detail-meta h1{font-size:1.4em;margin-bottom:10px}
+.detail-meta p{margin:6px 0;color:#4a5568;font-size:.93em}
+.section{margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0}
+.section h3{margin-bottom:10px}.owner-box{background:#fffbeb;padding:16px;border-radius:8px;border:1px solid #fbd38d}
+.claim-box{background:#ebf8ff;padding:16px;border-radius:8px;border:1px solid #90cdf4}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+th{background:#edf2f7;padding:10px 12px;text-align:left;font-size:.88em;color:#4a5568}
+td{padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:.88em}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin:16px 0}
+.stat-card{background:#fff;border-radius:10px;padding:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.stat-num{font-size:1.8em;font-weight:700;color:#3182ce}.stat-label{color:#718096;font-size:.85em;margin-top:2px}
+.empty{text-align:center;padding:50px 20px;color:#a0aec0}.empty p{font-size:1.05em;margin-bottom:14px}
+.pagination{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:20px;padding:14px 0}
+.page-info{color:#718096;font-size:.88em}
+.admin-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+footer{text-align:center;padding:18px;color:#a0aec0;font-size:.82em;border-top:1px solid #e2e8f0;margin-top:30px}
+@media(max-width:768px){.detail-header{flex-direction:column}.item-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+</style>
+</head>
+<body>
+<nav class="navbar">
+<div class="nav-inner">
+<span class="nav-brand" onclick="showPage('home')">🎒 校园失物招领</span>
+<div class="nav-tabs" id="navTabs">
+<span onclick="showPage('home')">首页</span>
+</div>
+<div id="navRight"></div>
+</div>
+</nav>
+<div class="container" id="app"></div>
+<footer>&copy; 2024 校园失物招领平台 — 让每一件失物都能回到主人身边</footer>
+
+<script>
+// ===================== 数据存储 =====================
+const DB = {
+  get(k){ try{return JSON.parse(localStorage.getItem(k))}catch(e){return null} },
+  set(k,v){ localStorage.setItem(k,JSON.stringify(v)) },
+  users(){ return this.get('users')||[] },
+  items(){ return this.get('items')||[] },
+  claims(){ return this.get('claims')||[] },
+  addUser(u){ const a=this.users();u.id=Date.now();a.push(u);this.set('users',a);return u },
+  addItem(i){ const a=this.items();i.id=Date.now();a.push(i);this.set('items',a);return i },
+  addClaim(c){ const a=this.claims();c.id=Date.now();a.push(c);this.set('claims',a);return c },
+  updateItem(id,data){ const a=this.items();const idx=a.findIndex(x=>x.id===id);if(idx>=0){a[idx]={...a[idx],...data};this.set('items',a)} },
+  updateClaim(id,data){ const a=this.claims();const idx=a.findIndex(x=>x.id===id);if(idx>=0){a[idx]={...a[idx],...data};this.set('claims',a)} },
+  deleteItem(id){ const a=this.items().filter(x=>x.id!==id);this.set('items',a) },
+  userById(id){ return this.users().find(x=>x.id===id) },
+  itemById(id){ return this.items().find(x=>x.id===id) },
+  claimById(id){ return this.claims().find(x=>x.id===id) },
+  init(){
+    if(!this.get('users')){
+      const admin={id:1,username:'admin',password:btoa('admin123'),email:'admin@campus.edu',phone:'',role:'admin',createdAt:new Date().toISOString()};
+      const user={id:2,username:'testuser',password:btoa('123456'),email:'test@campus.edu',phone:'13800138000',role:'user',createdAt:new Date().toISOString()};
+      this.set('users',[admin,user]);
+    }
+    if(!this.get('items')) this.set('items',[]);
+    if(!this.get('claims')) this.set('claims',[]);
+  }
+};
+DB.init();
+
+const CATS = ['证件卡类','电子设备','书籍文具','衣物饰品','钥匙钱包','生活用品','其他'];
+
+// ===================== 认证 =====================
+let currentUser = null;
+try{ currentUser = JSON.parse(sessionStorage.getItem('currentUser')); }catch(e){}
+
+function login(username,password){
+  const u = DB.users().find(x=>x.username===username && atob(x.password)===password);
+  if(u){ currentUser=u; sessionStorage.setItem('currentUser',JSON.stringify(u)); return true }
+  return false;
+}
+function logout(){ currentUser=null; sessionStorage.removeItem('currentUser'); showPage('home'); }
+function isAdmin(){ return currentUser && currentUser.role==='admin'; }
+
+// ===================== 导航 =====================
+function renderNav(){
+  let tabs = '<span onclick="showPage(\'home\')">首页</span>';
+  if(currentUser){
+    tabs += '<span onclick="showPage(\'publish\')">发布信息</span>';
+    tabs += '<span onclick="showPage(\'myItems\')">我的发布</span>';
+    tabs += '<span onclick="showPage(\'myClaims\')">我的认领</span>';
+    if(isAdmin()) tabs += '<span onclick="showPage(\'admin\')">后台管理</span>';
+  }
+  document.getElementById('navTabs').innerHTML = tabs;
+  const right = document.getElementById('navRight');
+  if(currentUser){
+    right.innerHTML = '<span class="nav-user">'+currentUser.username+'</span><span onclick="logout()" style="cursor:pointer;color:#e2e8f0;padding:6px 12px">退出</span>';
+  } else {
+    right.innerHTML = '<span onclick="showPage(\'login\')" style="cursor:pointer;color:#e2e8f0;padding:6px 12px">登录</span><span onclick="showPage(\'register\')" style="cursor:pointer;color:#e2e8f0;padding:6px 12px">注册</span>';
+  }
+}
+
+// ===================== Toast =====================
+function toast(msg,type){
+  const el = document.getElementById('toast');
+  el.className = 'alert alert-'+type; el.textContent=msg; el.style.display='block';
+  setTimeout(()=>el.style.display='none',3000);
+}
+
+// ===================== 页面路由 =====================
+let currentPage = 'home';
+let pageState = {};
+
+function showPage(page,state){
+  currentPage = page; pageState = state||{};
+  renderNav();
+  const app = document.getElementById('app');
+  switch(page){
+    case 'home': app.innerHTML = renderHome(); break;
+    case 'login': app.innerHTML = renderLogin(); break;
+    case 'register': app.innerHTML = renderRegister(); break;
+    case 'publish': if(!currentUser){showPage('login');return} app.innerHTML = renderPublish(); break;
+    case 'detail': app.innerHTML = renderDetail(pageState.id); break;
+    case 'myItems': if(!currentUser){showPage('login');return} app.innerHTML = renderMyItems(); break;
+    case 'myClaims': if(!currentUser){showPage('login');return} app.innerHTML = renderMyClaims(); break;
+    case 'admin': if(!isAdmin()){showPage('home');return} app.innerHTML = renderAdmin(pageState.tab||'dashboard'); break;
+  }
+}
+
+// ===================== 首页 =====================
+function renderHome(){
+  let items = DB.items().sort((a,b)=>b.id-a.id);
+  let type = pageState.type||'';
+  let cat = pageState.cat||'';
+  let q = pageState.q||'';
+  let page = pageState.page||1;
+  const perPage = 12;
+
+  if(type) items = items.filter(x=>x.itemType===type);
+  if(cat) items = items.filter(x=>x.category===cat);
+  if(q) items = items.filter(x=>x.title.includes(q)||x.description.includes(q)||x.location.includes(q));
+
+  const total = items.length;
+  const totalPages = Math.ceil(total/perPage);
+  items = items.slice((page-1)*perPage, page*perPage);
+
+  let h = '<div class="hero"><h1>校园失物招领平台</h1><p>捡到东西？丢失物品？在这里发布和寻找</p>';
+  h += '<div class="search-box"><input id="searchInput" placeholder="搜索物品名称、描述、地点..." onkeydown="if(event.keyCode===13)searchItems()"><button class="btn btn-primary" onclick="searchItems()">搜索</button></div></div>';
+
+  h += '<div class="filter-bar">';
+  h += btnFilter('全部','',''); h += btnFilter('寻物启事','lost',''); h += btnFilter('失物招领','found','');
+  CATS.forEach(c=>{ h += btnFilter(c,'',c); });
+  h += '</div>';
+
+  if(items.length===0){
+    h += '<div class="empty"><p>📭 暂无物品信息</p></div>';
+  } else {
+    h += '<div class="item-grid">';
+    items.forEach(item=>{
+      h += '<div class="item-card" onclick="showPage(\'detail\',{id:'+item.id+'})">';
+      if(item.images && item.images.length>0){
+        h += '<img src="'+item.images[0]+'" alt="'+esc(item.title)+'">';
+      } else {
+        h += '<div class="no-img">📦</div>';
+      }
+      h += '<div class="item-info">';
+      h += '<span class="badge badge-'+item.itemType+'">'+(item.itemType==='lost'?'寻物':'招领')+'</span>';
+      h += '<span class="badge">'+item.status+'</span>';
+      h += '<h3>'+esc(item.title)+'</h3>';
+      h += '<div class="meta">'+esc(item.category)+' · '+esc(item.location||'未填')+'</div>';
+      h += '<div class="date">'+item.foundDate+'</div>';
+      h += '</div></div>';
+    });
+    h += '</div>';
+  }
+
+  if(totalPages>1){
+    h += '<div class="pagination">';
+    if(page>1) h += '<button class="btn btn-sm btn-outline" onclick="goPage('+(page-1)+')">上一页</button>';
+    h += '<span class="page-info">第 '+page+' / '+totalPages+' 页</span>';
+    if(page<totalPages) h += '<button class="btn btn-sm btn-outline" onclick="goPage('+(page+1)+')">下一页</button>';
+    h += '</div>';
+  }
+  return h;
+}
+function btnFilter(label,type,cat){
+  let active = (pageState.type||'')===type && (pageState.cat||'')===cat;
+  let cls = active ? 'btn btn-primary' : 'btn btn-outline';
+  let onclick = "goFilter('"+type+"','"+cat+"')";
+  return '<button class="'+cls+'" style="font-size:.82em;padding:5px 14px" onclick="'+onclick+'">'+label+'</button>';
+}
+function goFilter(type,cat){
+  pageState.type=type; pageState.cat=cat; pageState.page=1;
+  document.getElementById('app').innerHTML = renderHome();
+}
+function goPage(p){
+  pageState.page = p;
+  document.getElementById('app').innerHTML = renderHome();
+}
+function searchItems(){
+  pageState.q = document.getElementById('searchInput').value.trim();
+  pageState.page = 1;
+  document.getElementById('app').innerHTML = renderHome();
+}
+
+// ===================== 登录/注册 =====================
+function renderLogin(){
+  return '<div class="form-panel"><h2>用户登录</h2>'+
+    '<div class="form-group"><label>用户名</label><input class="form-input" id="loginUser"></div>'+
+    '<div class="form-group"><label>密码</label><input class="form-input" type="password" id="loginPass"></div>'+
+    '<button class="btn btn-primary btn-block" onclick="doLogin()">登录</button>'+
+    '<p style="text-align:center;margin-top:12px;color:#718096">没有账号？<a href="javascript:showPage(\'register\')">立即注册</a></p></div>';
+}
+function doLogin(){
+  if(login(document.getElementById('loginUser').value,document.getElementById('loginPass').value)){
+    toast('登录成功','success'); showPage('home');
+  } else { toast('用户名或密码错误','danger'); }
+}
+function renderRegister(){
+  return '<div class="form-panel"><h2>用户注册</h2>'+
+    '<div class="form-group"><label>用户名 *</label><input class="form-input" id="regUser"></div>'+
+    '<div class="form-group"><label>邮箱 *</label><input class="form-input" id="regEmail"></div>'+
+    '<div class="form-group"><label>手机号</label><input class="form-input" id="regPhone"></div>'+
+    '<div class="form-group"><label>密码 *</label><input class="form-input" type="password" id="regPass"></div>'+
+    '<button class="btn btn-primary btn-block" onclick="doRegister()">注册</button>'+
+    '<p style="text-align:center;margin-top:12px;color:#718096">已有账号？<a href="javascript:showPage(\'login\')">立即登录</a></p></div>';
+}
+function doRegister(){
+  const u=document.getElementById('regUser').value.trim();
+  const e=document.getElementById('regEmail').value.trim();
+  const p=document.getElementById('regPass').value.trim();
+  const ph=document.getElementById('regPhone').value.trim();
+  if(!u||!e||!p){toast('请填写必填项','danger');return}
+  if(DB.users().find(x=>x.username===u)){toast('用户名已存在','danger');return}
+  if(DB.users().find(x=>x.email===e)){toast('邮箱已注册','danger');return}
+  DB.addUser({username:u,email:e,phone:ph,password:btoa(p),role:'user',createdAt:new Date().toISOString()});
+  toast('注册成功，请登录','success'); showPage('login');
+}
+
+// ===================== 发布 =====================
+function renderPublish(){
+  let opts = CATS.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+  return '<div class="form-panel"><h2>发布失物/招领信息</h2>'+
+    '<div class="form-group"><label>类型 *</label><div class="radio-group"><label><input type="radio" name="itemType" value="lost" checked> 寻物启事</label><label><input type="radio" name="itemType" value="found"> 失物招领</label></div></div>'+
+    '<div class="form-group"><label>物品名称 *</label><input class="form-input" id="pubTitle" placeholder="例如：黑色双肩包"></div>'+
+    '<div class="form-group"><label>分类 *</label><select class="form-input" id="pubCat"><option value="">请选择</option>'+opts+'</select></div>'+
+    '<div class="form-group"><label>地点</label><input class="form-input" id="pubLoc" placeholder="例如：图书馆二楼"></div>'+
+    '<div class="form-group"><label>日期 *</label><input class="form-input" type="date" id="pubDate"></div>'+
+    '<div class="form-group"><label>详细描述</label><textarea class="form-input" id="pubDesc" rows="4"></textarea></div>'+
+    '<div class="form-group"><label>上传图片（可多选）</label><input class="form-input" type="file" id="pubImages" accept="image/*" multiple></div>'+
+    '<button class="btn btn-primary btn-block" onclick="doPublish()">发布</button></div>';
+}
+function doPublish(){
+  const title=document.getElementById('pubTitle').value.trim();
+  const cat=document.getElementById('pubCat').value;
+  const loc=document.getElementById('pubLoc').value.trim();
+  const date=document.getElementById('pubDate').value;
+  const desc=document.getElementById('pubDesc').value.trim();
+  const type=document.querySelector('input[name="itemType"]:checked').value;
+  if(!title||!cat||!date){toast('请填写必填项','danger');return}
+
+  const files=document.getElementById('pubImages').files;
+  const images=[];
+  let processed=0;
+  function done(){
+    const item=DB.addItem({
+      title,description:desc,category:cat,location:loc,foundDate:date,
+      itemType:type,status:'published',userId:currentUser.id,images,createdAt:new Date().toISOString()
+    });
+    toast('发布成功！','success');
+    showPage('detail',{id:item.id});
+  }
+  if(files.length===0){done();return}
+  for(let i=0;i<files.length;i++){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      images.push(e.target.result);
+      processed++;
+      if(processed===files.length) done();
+    };
+    reader.readAsDataURL(files[i]);
+  }
+}
+
+// ===================== 物品详情 =====================
+function renderDetail(id){
+  const item = DB.itemById(id);
+  if(!item) return '<div class="empty"><p>物品不存在</p></div>';
+  const pub = DB.userById(item.userId);
+  let h = '<div class="detail-panel"><div class="detail-header"><div class="detail-gallery">';
+  if(item.images && item.images.length>0){
+    item.images.forEach(img=>{ h += '<img src="'+img+'" style="margin-bottom:8px">'; });
+  } else { h += '<div class="no-img">📦</div>'; }
+  h += '</div><div class="detail-meta">';
+  h += '<span class="badge badge-'+item.itemType+'">'+(item.itemType==='lost'?'寻物启事':'失物招领')+'</span>';
+  h += '<span class="badge">'+item.status+'</span>';
+  h += '<h1>'+esc(item.title)+'</h1>';
+  h += '<p>📂 分类：'+esc(item.category)+'</p>';
+  h += '<p>📍 地点：'+esc(item.location||'未填写')+'</p>';
+  h += '<p>📅 日期：'+item.foundDate+'</p>';
+  h += '<p>👤 发布者：'+(pub?pub.username:'未知')+'</p>';
+  h += '</div></div>';
+
+  if(item.description){
+    h += '<div class="section"><h3>详细描述</h3><p>'+esc(item.description)+'</p></div>';
+  }
+
+  // 发布者操作
+  if(currentUser && currentUser.id===item.userId){
+    h += '<div class="section owner-box"><h3>管理操作</h3>';
+    if(item.status==='published'){
+      h += '<button class="btn btn-danger btn-sm" onclick="cancelItem('+item.id+')">取消发布</button> ';
+    } else if(item.status==='cancelled'){
+      h += '<button class="btn btn-success btn-sm" onclick="republishItem('+item.id+')">重新发布</button> ';
+    }
+    h += '<button class="btn btn-danger btn-sm" onclick="deleteItem('+item.id+')">删除</button>';
+
+    // 认领列表
+    const claims = DB.claims().filter(x=>x.itemId===item.id);
+    if(claims.length>0){
+      h += '<h4 style="margin-top:16px">认领申请 ('+claims.length+')</h4><table><thead><tr><th>申请人</th><th>说明</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+      claims.forEach(c=>{
+        const claimer = DB.userById(c.claimantId);
+        h += '<tr><td>'+(claimer?claimer.username:'?')+'</td><td>'+esc(c.message||'-')+'</td><td><span class="badge badge-'+c.status+'">'+c.status+'</span></td><td>';
+        if(c.status==='pending'){
+          h += '<button class="btn btn-success btn-sm" onclick="approveClaim('+c.id+')">通过</button> ';
+          h += '<button class="btn btn-danger btn-sm" onclick="rejectClaim('+c.id+')">拒绝</button>';
+        } else if(c.status==='approved'){
+          h += '<button class="btn btn-primary btn-sm" onclick="markReturned('+c.id+')">标记已归还</button>';
+        }
+        h += '</td></tr>';
+      });
+      h += '</tbody></table>';
+    }
+    h += '</div>';
+  }
+
+  // 认领申请
+  if(currentUser && currentUser.id!==item.userId && item.status==='published'){
+    const myClaim = DB.claims().find(x=>x.itemId===item.id && x.claimantId===currentUser.id);
+    h += '<div class="section claim-box"><h3>申请认领</h3>';
+    if(myClaim){
+      h += '<div class="alert alert-info" style="display:block">您的认领状态：<strong>'+myClaim.status+'</strong></div>';
+    } else {
+      h += '<div class="form-group"><label>申请说明</label><textarea class="form-input" id="claimMsg" rows="3"></textarea></div>';
+      h += '<div class="form-group"><label>证明材料</label><textarea class="form-input" id="claimProof" rows="2"></textarea></div>';
+      h += '<button class="btn btn-primary" onclick="submitClaim('+item.id+')">提交认领</button>';
+    }
+    h += '</div>';
+  }
+
+  h += '<div class="section"><button class="btn btn-outline" onclick="showPage(\'home\')">← 返回首页</button></div>';
+  h += '</div>';
+  return h;
+}
+
+function cancelItem(id){ DB.updateItem(id,{status:'cancelled'}); toast('已取消','info'); showPage('detail',{id}); }
+function republishItem(id){ DB.updateItem(id,{status:'published'}); toast('已重新发布','success'); showPage('detail',{id}); }
+function deleteItem(id){
+  if(!confirm('确定删除？')) return;
+  DB.deleteItem(id); toast('已删除','info'); showPage('myItems');
+}
+function submitClaim(itemId){
+  const msg=document.getElementById('claimMsg').value.trim();
+  const proof=document.getElementById('claimProof').value.trim();
+  DB.addClaim({itemId,claimantId:currentUser.id,message:msg,proof,status:'pending',createdAt:new Date().toISOString()});
+  toast('认领申请已提交','success'); showPage('detail',{id:itemId});
+}
+function approveClaim(claimId){
+  const c=DB.claimById(claimId);
+  DB.updateClaim(claimId,{status:'approved'});
+  DB.updateItem(c.itemId,{status:'claimed'});
+  toast('已通过认领','success'); showPage('detail',{id:c.itemId});
+}
+function rejectClaim(claimId){
+  const c=DB.claimById(claimId);
+  DB.updateClaim(claimId,{status:'rejected'});
+  toast('已拒绝认领','info'); showPage('detail',{id:c.itemId});
+}
+function markReturned(claimId){
+  const c=DB.claimById(claimId);
+  DB.updateClaim(claimId,{status:'returned'});
+  DB.updateItem(c.itemId,{status:'returned'});
+  toast('已标记归还','success'); showPage('detail',{id:c.itemId});
+}
+
+// ===================== 我的发布 =====================
+function renderMyItems(){
+  const items = DB.items().filter(x=>x.userId===currentUser.id).sort((a,b)=>b.id-a.id);
+  if(items.length===0) return '<div class="empty"><p>📭 还没有发布过信息</p><button class="btn btn-primary" onclick="showPage(\'publish\')">立即发布</button></div>';
+  let h = '<h2>我的发布</h2><table><thead><tr><th>类型</th><th>标题</th><th>分类</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>';
+  items.forEach(item=>{
+    h += '<tr><td><span class="badge badge-'+item.itemType+'">'+(item.itemType==='lost'?'寻物':'招领')+'</span></td>';
+    h += '<td><a href="javascript:showPage(\'detail\',{id:'+item.id+'})">'+esc(item.title)+'</a></td>';
+    h += '<td>'+esc(item.category)+'</td><td><span class="badge">'+item.status+'</span></td>';
+    h += '<td>'+item.foundDate+'</td>';
+    h += '<td><button class="btn btn-sm btn-outline" onclick="showPage(\'detail\',{id:'+item.id+'})">查看</button></td></tr>';
+  });
+  h += '</tbody></table>';
+  return h;
+}
+
+// ===================== 我的认领 =====================
+function renderMyClaims(){
+  const claims = DB.claims().filter(x=>x.claimantId===currentUser.id).sort((a,b)=>b.id-a.id);
+  if(claims.length===0) return '<div class="empty"><p>📭 还没有认领记录</p><button class="btn btn-primary" onclick="showPage(\'home\')">去浏览物品</button></div>';
+  let h = '<h2>我的认领</h2><table><thead><tr><th>物品</th><th>发布者</th><th>说明</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+  claims.forEach(c=>{
+    const item = DB.itemById(c.itemId);
+    const pub = item ? DB.userById(item.userId) : null;
+    h += '<tr><td>'+(item?'<a href="javascript:showPage(\'detail\',{id:'+c.itemId+'})">'+esc(item.title)+'</a>':'已删除')+'</td>';
+    h += '<td>'+(pub?pub.username:'?')+'</td>';
+    h += '<td>'+esc(c.message||'-')+'</td>';
+    h += '<td><span class="badge badge-'+c.status+'">'+c.status+'</span></td>';
+    h += '<td>'+new Date(c.createdAt).toLocaleDateString()+'</td>';
+    h += '<td>'+(item?'<button class="btn btn-sm btn-outline" onclick="showPage(\'detail\',{id:'+c.itemId+'})">查看</button>':'')+'</td></tr>';
+  });
+  h += '</tbody></table>';
+  return h;
+}
+
+// ===================== 管理后台 =====================
+function renderAdmin(tab){
+  let h = '<h2>📊 管理后台</h2><div class="admin-tabs">';
+  h += '<button class="btn btn-sm '+(tab==='dashboard'?'btn-primary':'btn-outline')+'" onclick="showPage(\'admin\',{tab:\'dashboard\'})">概览</button>';
+  h += '<button class="btn btn-sm '+(tab==='items'?'btn-primary':'btn-outline')+'" onclick="showPage(\'admin\',{tab:\'items\'})">物品管理</button>';
+  h += '<button class="btn btn-sm '+(tab==='claims'?'btn-primary':'btn-outline')+'" onclick="showPage(\'admin\',{tab:\'claims\'})">认领管理</button>';
+  h += '<button class="btn btn-sm '+(tab==='users'?'btn-primary':'btn-outline')+'" onclick="showPage(\'admin\',{tab:\'users\'})">用户管理</button>';
+  h += '</div>';
+
+  if(tab==='dashboard'){
+    const users=DB.users(); const items=DB.items(); const claims=DB.claims();
+    h += '<div class="stats">';
+    h += statBox(users.length,'用户总数');
+    h += statBox(items.length,'物品总数');
+    h += statBox(items.filter(x=>x.itemType==='lost').length,'寻物启事');
+    h += statBox(items.filter(x=>x.itemType==='found').length,'失物招领');
+    h += statBox(claims.length,'认领申请');
+    h += statBox(claims.filter(x=>x.status==='pending').length,'待处理');
+    h += '</div>';
+  } else if(tab==='items'){
+    const items=DB.items().sort((a,b)=>b.id-a.id);
+    h += '<table><thead><tr><th>ID</th><th>标题</th><th>类型</th><th>分类</th><th>发布者</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>';
+    items.forEach(item=>{
+      const pub=DB.userById(item.userId);
+      h += '<tr><td>'+item.id+'</td><td><a href="javascript:showPage(\'detail\',{id:'+item.id+'})">'+esc(item.title)+'</a></td>';
+      h += '<td><span class="badge badge-'+item.itemType+'">'+(item.itemType==='lost'?'寻物':'招领')+'</span></td>';
+      h += '<td>'+esc(item.category)+'</td><td>'+(pub?pub.username:'?')+'</td>';
+      h += '<td><span class="badge">'+item.status+'</span></td><td>'+item.foundDate+'</td>';
+      h += '<td><button class="btn btn-danger btn-sm" onclick="deleteItem('+item.id+')">删除</button></td></tr>';
+    });
+    h += '</tbody></table>';
+  } else if(tab==='claims'){
+    const claims=DB.claims().sort((a,b)=>b.id-a.id);
+    h += '<table><thead><tr><th>ID</th><th>物品</th><th>申请人</th><th>发布者</th><th>说明</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+    claims.forEach(c=>{
+      const item=DB.itemById(c.itemId);
+      const claimer=DB.userById(c.claimantId);
+      const pub=item?DB.userById(item.userId):null;
+      h += '<tr><td>'+c.id+'</td><td>'+(item?esc(item.title):'已删除')+'</td>';
+      h += '<td>'+(claimer?claimer.username:'?')+'</td><td>'+(pub?pub.username:'?')+'</td>';
+      h += '<td>'+esc(c.message||'-')+'</td>';
+      h += '<td><span class="badge badge-'+c.status+'">'+c.status+'</span></td>';
+      h += '<td>'+new Date(c.createdAt).toLocaleDateString()+'</td>';
+      h += '<td>';
+      if(c.status==='pending'){
+        h += '<button class="btn btn-success btn-sm" onclick="approveClaim('+c.id+')">通过</button> ';
+        h += '<button class="btn btn-danger btn-sm" onclick="rejectClaim('+c.id+')">拒绝</button>';
+      }
+      h += '</td></tr>';
+    });
+    h += '</tbody></table>';
+  } else if(tab==='users'){
+    const users=DB.users();
+    h += '<table><thead><tr><th>ID</th><th>用户名</th><th>邮箱</th><th>手机</th><th>角色</th><th>注册时间</th><th>操作</th></tr></thead><tbody>';
+    users.forEach(u=>{
+      h += '<tr><td>'+u.id+'</td><td>'+esc(u.username)+'</td><td>'+esc(u.email)+'</td>';
+      h += '<td>'+esc(u.phone||'-')+'</td>';
+      h += '<td><span class="badge '+(u.role==='admin'?'badge-success':'')+'">'+u.role+'</span></td>';
+      h += '<td>'+new Date(u.createdAt).toLocaleDateString()+'</td>';
+      h += '<td>';
+      if(u.id!==currentUser.id){
+        h += '<button class="btn btn-sm '+(u.role==='admin'?'btn-danger':'btn-success')+'" onclick="toggleRole('+u.id+')">'+(u.role==='admin'?'降为普通用户':'升为管理员')+'</button>';
+      }
+      h += '</td></tr>';
+    });
+    h += '</tbody></table>';
+  }
+  return h;
+}
+function statBox(num,label){
+  return '<div class="stat-card"><div class="stat-num">'+num+'</div><div class="stat-label">'+label+'</div></div>';
+}
+function toggleRole(uid){
+  const users=DB.users();
+  const u=users.find(x=>x.id===uid);
+  if(u){ u.role=u.role==='admin'?'user':'admin'; DB.set('users',users); toast('角色已更新','success'); showPage('admin',{tab:'users'}); }
+}
+
+// ===================== 工具 =====================
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===================== 初始化 =====================
+renderNav();
+showPage('home');
+</script>
+<div id="toast" class="alert"></div>
+</body>
+</html>
