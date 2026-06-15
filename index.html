@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校园失物招领平台</title>
+<link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <a href="index.html" class="logo">校园失物招领</a>
+    <div id="nav-user"></div>
+  </div>
+</header>
+
+<div class="page-header">
+  <h1>校园失物招领平台</h1>
+  <p>发布失物信息、搜索物品、申请认领</p>
+</div>
+
+<div class="container">
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="搜索物品名称、描述..." oninput="loadItems()">
+    <select id="filterType" onchange="loadItems()">
+      <option value="">全部类型</option>
+      <option value="lost">寻物启事</option>
+      <option value="found">失物招领</option>
+    </select>
+    <select id="filterCategory" onchange="loadItems()">
+      <option value="">全部分类</option>
+      <option value="电子产品">电子产品</option>
+      <option value="证件卡片">证件卡片</option>
+      <option value="书籍文具">书籍文具</option>
+      <option value="衣物饰品">衣物饰品</option>
+      <option value="生活用品">生活用品</option>
+      <option value="其他">其他</option>
+    </select>
+  </div>
+
+  <div id="itemsList" class="items-grid"></div>
+  <div id="loading" class="loading" style="display:none;">加载中...</div>
+</div>
+
+<footer class="footer">
+  <p>校园失物招领平台 &copy; 2024</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="static/js/app.js"></script>
+<script>
+async function loadItems() {
+  const search = document.getElementById('searchInput').value.trim();
+  const type = document.getElementById('filterType').value;
+  const category = document.getElementById('filterCategory').value;
+  
+  document.getElementById('loading').style.display = 'block';
+  
+  let query = supabase.from('items').select('*, profiles(username), images(url)').order('created_at', { ascending: false }).limit(50);
+  
+  if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+  if (type) query = query.eq('item_type', type);
+  if (category) query = query.eq('category', category);
+  
+  const { data, error } = await query;
+  
+  document.getElementById('loading').style.display = 'none';
+  
+  if (error) {
+    document.getElementById('itemsList').innerHTML = '<div class="loading">加载失败: ' + error.message + '</div>';
+    return;
+  }
+  
+  if (!data || data.length === 0) {
+    document.getElementById('itemsList').innerHTML = '<div class="loading">暂无物品信息，<a href="post.html">发布第一条</a>吧！</div>';
+    return;
+  }
+  
+  document.getElementById('itemsList').innerHTML = data.map(item => `
+    <div class="item-card" onclick="location.href='detail.html?id=${item.id}'">
+      <div class="item-img">
+        ${item.images && item.images.length > 0 
+          ? `<img src="${item.images[0].url}" alt="${item.title}" onerror="this.parentElement.innerHTML=''">` 
+          : '📦'}
+      </div>
+      <div class="item-body">
+        <div class="item-title">${getTypeBadge(item.item_type)} ${item.title}</div>
+        <div class="item-meta">
+          <span>${item.category}</span>
+          <span>${item.location}</span>
+          <span>${formatDate(item.found_date)}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateNav();
+  loadItems();
+});
+</script>
+</body>
+</html>

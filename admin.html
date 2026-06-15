@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理后台 - 校园失物招领</title>
+<link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <a href="index.html" class="logo">校园失物招领</a>
+    <div id="nav-user"></div>
+  </div>
+</header>
+
+<div class="container" style="margin-top:30px;">
+  <div id="unauthorized" style="display:none;">
+    <div class="card">
+      <h2>权限不足</h2>
+      <p>只有管理员可以访问此页面。</p>
+      <a href="index.html" class="btn btn-primary">返回首页</a>
+    </div>
+  </div>
+
+  <div id="adminContent">
+    <div class="card">
+      <h2 class="card-title">认领申请管理</h2>
+      <div id="claimsTable">加载中...</div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2 class="card-title">所有物品</h2>
+      <div id="itemsTable">加载中...</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="static/js/app.js"></script>
+<script>
+async function init() {
+  updateNav();
+  
+  const profile = await getProfile();
+  if (!profile || profile.role !== 'admin') {
+    document.getElementById('unauthorized').style.display = 'block';
+    document.getElementById('adminContent').style.display = 'none';
+    return;
+  }
+  
+  loadClaims();
+  loadItems();
+}
+
+async function loadClaims() {
+  const { data, error } = await supabase.from('claims').select('*, items(title, item_type), profiles:claimant_id(username)').order('created_at', { ascending: false }).limit(100);
+  
+  if (error || !data) {
+    document.getElementById('claimsTable').innerHTML = '<p>加载失败</p>';
+    return;
+  }
+  
+  if (data.length === 0) {
+    document.getElementById('claimsTable').innerHTML = '<p style="color:#999">暂无认领申请</p>';
+    return;
+  }
+  
+  document.getElementById('claimsTable').innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>申请人</th><th>物品</th><th>说明</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+      <tbody>
+        ${data.map(c => `
+          <tr>
+            <td>${c.profiles ? c.profiles.username : '?'}</td>
+            <td>${getTypeBadge(c.items.item_type)} ${c.items.title}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.message || '-'}</td>
+            <td><span class="badge badge-${c.status}">${c.status}</span></td>
+            <td>${formatDate(c.created_at)}</td>
+            <td>
+              ${c.status === 'pending' ? `
+                <button class="btn btn-sm btn-success" onclick="handleClaimAdmin(${c.id},'approved',${c.item_id})">通过</button>
+                <button class="btn btn-sm btn-danger" onclick="handleClaimAdmin(${c.id},'rejected',${c.item_id})">拒绝</button>
+              ` : c.status === 'approved' ? `
+                <button class="btn btn-sm btn-success" onclick="handleClaimAdmin(${c.id},'completed',${c.item_id})">完成归还</button>
+              ` : '-'}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function loadItems() {
+  const { data, error } = await supabase.from('items').select('*, profiles(username)').order('created_at', { ascending: false }).limit(100);
+  
+  if (error || !data) {
+    document.getElementById('itemsTable').innerHTML = '<p>加载失败</p>';
+    return;
+  }
+  
+  if (data.length === 0) {
+    document.getElementById('itemsTable').innerHTML = '<p style="color:#999">暂无物品</p>';
+    return;
+  }
+  
+  document.getElementById('itemsTable').innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>标题</th><th>类型</th><th>发布者</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+      <tbody>
+        ${data.map(item => `
+          <tr>
+            <td><a href="detail.html?id=${item.id}">${item.title}</a></td>
+            <td>${getTypeBadge(item.item_type)}</td>
+            <td>${item.profiles ? item.profiles.username : '?'}</td>
+            <td><span class="badge badge-${item.status}">${getStatusText(item.status)}</span></td>
+            <td>${formatDate(item.created_at)}</td>
+            <td>
+              <a href="detail.html?id=${item.id}" class="btn btn-sm btn-outline">查看</a>
+              <button class="btn btn-sm btn-danger" onclick="deleteItemAdmin(${item.id})">删除</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function handleClaimAdmin(claimId, status, itemId) {
+  await supabase.from('claims').update({ status, updated_at: new Date().toISOString() }).eq('id', claimId);
+  if (status === 'completed') await supabase.from('items').update({ status: 'returned' }).eq('id', itemId);
+  else if (status === 'approved') await supabase.from('items').update({ status: 'claimed' }).eq('id', itemId);
+  loadClaims();
+  loadItems();
+}
+
+async function deleteItemAdmin(id) {
+  if (!confirm('确定删除？')) return;
+  await supabase.from('items').delete().eq('id', id);
+  loadItems();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -1,67 +1,83 @@
--- ???????? - Supabase ??? Schema
--- ? Supabase Dashboard > SQL Editor ??????
+﻿-- 用户资料表 (关联 Supabase Auth)
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username TEXT NOT NULL UNIQUE,
+  phone TEXT DEFAULT '',
+  role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- 1. ???
+-- 失物/招领物品表
 CREATE TABLE IF NOT EXISTS items (
-  id BIGSERIAL PRIMARY KEY,
-  title VARCHAR(128) NOT NULL,
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
   description TEXT DEFAULT '',
-  category VARCHAR(32) NOT NULL,
-  location VARCHAR(128) DEFAULT '',
+  category TEXT NOT NULL,
+  location TEXT DEFAULT '',
   found_date DATE NOT NULL,
-  item_type VARCHAR(8) NOT NULL CHECK (item_type IN ('lost', 'found')),
-  status VARCHAR(16) DEFAULT 'published',
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  item_type TEXT NOT NULL CHECK (item_type IN ('lost', 'found')),
+  status TEXT DEFAULT 'published' CHECK (status IN ('published', 'claimed', 'returned', 'closed')),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_items_category ON items(category);
-CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
-CREATE INDEX IF NOT EXISTS idx_items_user_id ON items(user_id);
 
--- 2. ???
+-- 图片表
 CREATE TABLE IF NOT EXISTS images (
-  id BIGSERIAL PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-  filename VARCHAR(256) NOT NULL,
-  url VARCHAR(512) DEFAULT '',
+  filename TEXT NOT NULL,
+  url TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_images_item_id ON images(item_id);
 
--- 3. ???
+-- 认领申请表
 CREATE TABLE IF NOT EXISTS claims (
-  id BIGSERIAL PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-  claimant_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  claimant_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   message TEXT DEFAULT '',
   proof TEXT DEFAULT '',
-  status VARCHAR(16) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'returned')),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'completed')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_claims_item_id ON claims(item_id);
-CREATE INDEX IF NOT EXISTS idx_claims_claimant_id ON claims(claimant_id);
-CREATE INDEX IF NOT EXISTS idx_claims_status ON claims(status);
 
--- 4. RLS ??
+-- RLS 策略
 ALTER TABLE items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read items" ON items FOR SELECT USING (true);
+CREATE POLICY "Users can create items" ON items FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own items" ON items FOR UPDATE USING (auth.uid() = user_id);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read profiles" ON profiles FOR SELECT USING (true);
+CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+
 ALTER TABLE images ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read images" ON images FOR SELECT USING (true);
+CREATE POLICY "Users can insert images" ON images FOR INSERT WITH CHECK (
+  EXISTS (SELECT 1 FROM items WHERE items.id = item_id AND items.user_id = auth.uid())
+);
+
 ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read claims" ON claims FOR SELECT USING (true);
+CREATE POLICY "Users can create claims" ON claims FOR INSERT WITH CHECK (auth.uid() = claimant_id);
+CREATE POLICY "Owners and admins can update claims" ON claims FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM items WHERE items.id = claims.item_id AND items.user_id = auth.uid())
+  OR EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+);
 
--- items: ?????
-CREATE POLICY items_read ON items FOR SELECT USING (true);
--- items: ???????
-CREATE POLICY items_insert ON items FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
--- items: ??????
-CREATE POLICY items_update ON items FOR UPDATE USING (auth.uid() IS NOT NULL);
--- items: ??????  
-CREATE POLICY items_delete ON items FOR DELETE USING (auth.uid() IS NOT NULL);
+-- 自动创建 profile
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS 
+BEGIN
+  INSERT INTO public.profiles (id, username)
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'username', NEW.email));
+  RETURN NEW;
+END;
+ LANGUAGE plpgsql SECURITY DEFINER;
 
--- images: ?????
-CREATE POLICY images_read ON images FOR SELECT USING (true);
-CREATE POLICY images_insert ON images FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
-
--- claims: ?????
-CREATE POLICY claims_read ON claims FOR SELECT USING (true);
-CREATE POLICY claims_insert ON claims FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
-CREATE POLICY claims_update ON claims FOR UPDATE USING (auth.uid() IS NOT NULL);
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();

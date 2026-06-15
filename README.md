@@ -1,38 +1,31 @@
-# ????????
+﻿# 校园失物招领平台
 
-?? Flask + Vercel + Supabase ??????????
+基于 **Supabase** + **GitHub Pages** 的全栈校园失物招领系统。
 
-## ???
-- **??**: Python Flask
-- **???**: Supabase PostgreSQL
-- **??**: Supabase Storage
-- **??**: Vercel
+## 功能
 
-## ????
+- 失物/招领信息发布
+- 图片上传（Supabase Storage）
+- 分类搜索与关键词搜索
+- 认领申请与审核
+- 物品状态管理（发布→认领→归还）
+- 管理员后台
 
-### 1. Supabase ??
-1. ?? [Supabase](https://supabase.com) (??)
-2. ?????
-3. ? SQL Editor ??? schema.sql
-4. ? Storage ????????: item-images ? claim-proofs
-5. ? Settings > API ??:
-   - Project URL (?? SUPABASE_URL)
-   - service_role key (?? SUPABASE_SERVICE_KEY)
-6. ? Settings > Database ??:
-   - Connection string > Session pooler (?? DATABASE_URL)
+## 技术栈
 
-### 2. Vercel ??
-1. ?? [vercel.com/new](https://vercel.com/new)
-2. ??? GitHub ??
-3. ??????:
-   - DATABASE_URL - Supabase Session Pooler ?????
-   - SUPABASE_URL - Supabase ?? URL
-   - SUPABASE_SERVICE_KEY - Supabase Service Role Key
-   - SECRET_KEY - Flask ?? (?????)
-4. ??
+- **前端**: 原生 HTML/CSS/JS
+- **后端/数据库**: Supabase (PostgreSQL + Auth + Storage)
+- **部署**: GitHub Pages
 
-### 3. ????
-`ash
-pip install -r requirements.txt
-python app.py
-`
+## 部署步骤
+
+### 1. Supabase 设置
+1. 在 [Supabase SQL Editor](https://edagdtolpmspurnohxkw.supabase.com) 中运行 `schema.sql`
+2. 在 Supabase Storage 中创建 `item-images` 公开存储桶
+3. 在 Authentication → Settings 中启用 Email 登录
+
+### 2. GitHub Pages
+1. 进入仓库 Settings → Pages
+2. Source 选择 `Deploy from a branch`
+3. Branch 选择 `master`，目录选择 `/ (root)`
+4. 保存后等待几分钟即可访问
