@@ -1,4 +1,4 @@
-﻿import os, uuid, base64
+import os, uuid, base64
 from io import BytesIO
 
 def upload_image(file):
