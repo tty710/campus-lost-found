@@ -1,7 +1,10 @@
 import os, uuid
-from PIL import Image as PILImage
 
 def upload_image(file):
+    try:
+        from PIL import Image as PILImage
+    except ImportError:
+        return None
     from flask import current_app
     ext = file.filename.rsplit(".", 1)[1].lower() if "." in file.filename else "jpg"
     name = f"{uuid.uuid4().hex}.{ext}"
@@ -16,4 +19,5 @@ def upload_image(file):
 def delete_image(filename):
     from flask import current_app
     p = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
-    if os.path.exists(p): os.remove(p)
+    if os.path.exists(p):
+        os.remove(p)

@@ -6,7 +6,6 @@ from flask import (Blueprint, render_template, redirect, url_for, flash,
                    request, current_app)
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from PIL import Image as PILImage
 
 from models import db, Item, Image, Claim
 import storage
@@ -36,6 +35,7 @@ def save_upload(file):
     file.seek(0)
     path = os.path.join(current_app.config["UPLOAD_FOLDER"], name)
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    from PIL import Image as PILImage
     img = PILImage.open(file)
     img.thumbnail((1200, 1200))
     img.save(path)
