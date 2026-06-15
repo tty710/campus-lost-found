@@ -37,9 +37,27 @@ def create_app():
     app.register_blueprint(claims_bp)
     app.register_blueprint(admin_bp)
 
-    # 创建表
-    with app.app_context():
-        db.create_all()
+    # 首次请求时建表
+    _init_flag = {"done": False}
+
+    @app.before_request
+    def _init_tables():
+        if not _init_flag["done"]:
+            _init_flag["done"] = True
+            try:
+                db.create_all()
+            except Exception as e:
+                import sys
+                print(f"DB init warning: {e}", file=sys.stderr)
+
+    @app.route("/health")
+    def health():
+        return "OK"
+
+    @app.route("/")
+    def home():
+        from flask import redirect
+        return redirect("/items/")
 
     return app
 
