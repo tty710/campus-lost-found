@@ -11,7 +11,7 @@ def create_app():
 
     import os
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    os.makedirs(os.path.join(os.path.dirname(__file__), "instance"), exist_ok=True)
+    os.makedirs("/tmp/instance", exist_ok=True)
 
     db.init_app(app)
 
