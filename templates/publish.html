@@ -1,0 +1,47 @@
+﻿{% extends "base.html" %}
+{% block title %}发布信息 - 校园失物招领{% endblock %}
+{% block content %}
+<div class="form-container">
+    <h2>发布失物 / 招领信息</h2>
+    <form method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>类型 *</label>
+            <div class="radio-group">
+                <label><input type="radio" name="item_type" value="lost" required> 寻物启事（我丢了东西）</label>
+                <label><input type="radio" name="item_type" value="found"> 失物招领（我捡到了东西）</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>物品名称 *</label>
+            <input type="text" name="title" class="form-input" required placeholder="例如：黑色双肩包">
+        </div>
+        <div class="form-group">
+            <label>分类 *</label>
+            <select name="category" class="form-input" required>
+                <option value="">请选择分类</option>
+                {% for cat in categories %}
+                    <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>地点</label>
+            <input type="text" name="location" class="form-input" placeholder="例如：图书馆二楼、食堂门口">
+        </div>
+        <div class="form-group">
+            <label>日期 *</label>
+            <input type="date" name="found_date" class="form-input" required>
+        </div>
+        <div class="form-group">
+            <label>详细描述</label>
+            <textarea name="description" class="form-input" rows="5" placeholder="描述物品特征、颜色、品牌等信息..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>上传图片（可多选）</label>
+            <input type="file" name="images" class="form-input" accept="image/*" multiple>
+            <small>支持 jpg、png、gif、webp，单张不超过 16MB</small>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">发布</button>
+    </form>
+</div>
+{% endblock %}

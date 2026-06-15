@@ -1,0 +1,60 @@
+﻿{% extends "base.html" %}
+{% block title %}物品管理 - 校园失物招领{% endblock %}
+{% block content %}
+<h2>📦 物品管理</h2>
+<div class="admin-nav">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline btn-sm">概览</a>
+    <a href="{{ url_for('admin.manage_items') }}" class="btn btn-primary btn-sm">物品管理</a>
+    <a href="{{ url_for('admin.manage_claims') }}" class="btn btn-outline btn-sm">认领管理</a>
+    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline btn-sm">用户管理</a>
+</div>
+
+<div class="filter-bar">
+    <a href="{{ url_for('admin.manage_items') }}" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+    <a href="{{ url_for('admin.manage_items', status='published') }}" class="btn btn-sm {% if current_status == 'published' %}btn-primary{% else %}btn-outline{% endif %}">已发布</a>
+    <a href="{{ url_for('admin.manage_items', status='claimed') }}" class="btn btn-sm {% if current_status == 'claimed' %}btn-primary{% else %}btn-outline{% endif %}">已认领</a>
+    <a href="{{ url_for('admin.manage_items', status='returned') }}" class="btn btn-sm {% if current_status == 'returned' %}btn-primary{% else %}btn-outline{% endif %}">已归还</a>
+    <a href="{{ url_for('admin.manage_items', status='cancelled') }}" class="btn btn-sm {% if current_status == 'cancelled' %}btn-primary{% else %}btn-outline{% endif %}">已取消</a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr><th>ID</th><th>标题</th><th>类型</th><th>分类</th><th>发布者</th><th>状态</th><th>日期</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+    {% for item in items.items %}
+        <tr>
+            <td>{{ item.id }}</td>
+            <td><a href="{{ url_for('items.item_detail', item_id=item.id) }}">{{ item.title }}</a></td>
+            <td><span class="badge badge-{{ item.item_type }}">{{ '寻物' if item.item_type == 'lost' else '招领' }}</span></td>
+            <td>{{ item.category }}</td>
+            <td>{{ item.publisher.username }}</td>
+            <td><span class="badge badge-status">{{ item.status }}</span></td>
+            <td>{{ item.found_date.strftime('%Y-%m-%d') }}</td>
+            <td>
+                <form method="post" action="{{ url_for('admin.review_item', item_id=item.id) }}" style="display:inline">
+                    <input type="hidden" name="status" value="cancelled">
+                    <button class="btn btn-danger btn-sm" onclick="return confirm('确定取消该物品？')">取消</button>
+                </form>
+                <form method="post" action="{{ url_for('admin.review_item', item_id=item.id) }}" style="display:inline" onsubmit="return confirm('确定删除？')">
+                    <input type="hidden" name="action" value="delete">
+                    <button class="btn btn-danger btn-sm">删除</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% if items.pages > 1 %}
+<div class="pagination">
+    {% if items.has_prev %}
+        <a href="{{ url_for('admin.manage_items', page=items.prev_num, status=current_status) }}" class="btn btn-sm btn-outline">上一页</a>
+    {% endif %}
+    <span class="page-info">第 {{ items.page }} / {{ items.pages }} 页</span>
+    {% if items.has_next %}
+        <a href="{{ url_for('admin.manage_items', page=items.next_num, status=current_status) }}" class="btn btn-sm btn-outline">下一页</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
