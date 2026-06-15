@@ -9,7 +9,7 @@ class Config:
         ""
     )
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_size": 5,
+        "pool_size": 3,
         "pool_recycle": 300,
         "pool_pre_ping": True,
     }
@@ -17,7 +17,7 @@ class Config:
     def init_app(app):
         uri = app.config["SQLALCHEMY_DATABASE_URI"]
         if not uri:
-            raise RuntimeError("DATABASE_URL 环境变量未设置，请在 Vercel Dashboard 中添加")
+            raise RuntimeError("DATABASE_URL environment variable not set. Please add it in Vercel Dashboard.")
         if uri.startswith("postgres://"):
             uri = uri.replace("postgres://", "postgresql://", 1)
         if "sslmode" not in uri.lower() and "postgresql://" in uri:
