@@ -1,4 +1,4 @@
-from flask import Flask
+ï»¿from flask import Flask
 from config import Config
 from models import db
 from flask_login import LoginManager
@@ -8,7 +8,7 @@ def create_app():
     app.config.from_object(Config)
     Config.init_app(app)
 
-    # È·±£ upload / instance Ä¿Â¼´æÔÚ
+    # ç¡®ä¿ upload / instance ç›®å½•å­˜åœ¨
     import os
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(os.path.join(os.path.dirname(__file__), "instance"), exist_ok=True)
@@ -17,7 +17,7 @@ def create_app():
 
     login_manager = LoginManager()
     login_manager.login_view = "auth.login"
-    login_manager.login_message = "ÇëÏÈµÇÂ¼"
+    login_manager.login_message = "è¯·å…ˆç™»å½•"
     login_manager.init_app(app)
 
     from models import User
@@ -26,7 +26,7 @@ def create_app():
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
-    # ×¢²áÀ¶Í¼
+    # æ³¨å†Œè“å›¾
     from routes.auth import auth_bp
     from routes.items import items_bp
     from routes.claims import claims_bp
@@ -37,7 +37,7 @@ def create_app():
     app.register_blueprint(claims_bp)
     app.register_blueprint(admin_bp)
 
-    # Ê×´ÎÇëÇóÊ±½¨±í
+    # é¦–æ¬¡è¯·æ±‚æ—¶å»ºè¡¨
     _init_flag = {"done": False}
 
     @app.before_request
@@ -61,5 +61,8 @@ def create_app():
 
     return app
 
+# Vercel éœ€è¦æ¨¡å—çº§åˆ«çš„ app å˜é‡
+app = create_app()
+
 if __name__ == "__main__":
-    create_app().run(debug=True, port=5000)
+    app.run(debug=True, port=5000)
