@@ -1,4 +1,4 @@
-ï»¿from flask import Flask
+from flask import Flask
 from config import Config
 from models import db
 from flask_login import LoginManager
@@ -6,8 +6,9 @@ from flask_login import LoginManager
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    Config.init_app(app)
 
-    # ç¡®ä¿ upload / instance ç›®å½•å­˜åœ¨
+    # È·±£ upload / instance Ä¿Â¼´æÔÚ
     import os
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(os.path.join(os.path.dirname(__file__), "instance"), exist_ok=True)
@@ -16,7 +17,7 @@ def create_app():
 
     login_manager = LoginManager()
     login_manager.login_view = "auth.login"
-    login_manager.login_message = "è¯·å…ˆç™»å½•"
+    login_manager.login_message = "ÇëÏÈµÇÂ¼"
     login_manager.init_app(app)
 
     from models import User
@@ -25,7 +26,7 @@ def create_app():
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
-    # æ³¨å†Œè“å›¾
+    # ×¢²áÀ¶Í¼
     from routes.auth import auth_bp
     from routes.items import items_bp
     from routes.claims import claims_bp
@@ -36,7 +37,7 @@ def create_app():
     app.register_blueprint(claims_bp)
     app.register_blueprint(admin_bp)
 
-    # åˆ›å»ºè¡¨
+    # ´´½¨±í
     with app.app_context():
         db.create_all()
 
