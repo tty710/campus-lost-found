@@ -12,18 +12,23 @@ async function checkAuth() { const {data:{session}}=await supabase.auth.getSessi
 async function getProfile() {
   const {data:{session}} = await supabase.auth.getSession();
   if (!session) return null;
-  const {data} = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+  
+  let {data} = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
   if (data) return data;
-  // 没有 profile？自动创建一个
+  
+  // 没有 profile，自动创建
   const username = session.user.user_metadata?.username || session.user.email;
   const phone = session.user.user_metadata?.phone || '';
+  
+  // 检查是否是第一个用户 → 设为管理员
+  const {count} = await supabase.from('profiles').select('*', {count:'exact', head:true});
+  const role = (count === 0) ? 'admin' : 'user';
+  
   const {data: newProfile, error} = await supabase.from('profiles').insert({
-    id: session.user.id, username: username, phone: phone
+    id: session.user.id, username: username, phone: phone, role: role
   }).select().single();
-  if (error) {
-    console.error('Auto-create profile failed:', error);
-    return null;
-  }
+  
+  if (error) { console.error('Auto-create failed:', error); return null; }
   return newProfile;
 }
 
