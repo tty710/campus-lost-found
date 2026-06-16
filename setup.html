@@ -8,23 +8,24 @@
 </head>
 <body>
 <header class="header">
-  <div class="container">
-    <a href="index.html" class="logo">校园失物招领</a>
-  </div>
+  <div class="container"><a href="index.html" class="logo">校园失物招领</a></div>
 </header>
 <div class="container" style="max-width:500px;margin-top:60px">
   <div class="card" style="text-align:center">
     <h2>管理员设置</h2>
-    <p style="margin:16px 0" id="msg">检查登录状态...</p>
+    <p id="msg" style="margin:16px 0">检查登录...</p>
     <button class="btn btn-primary btn-lg" id="btn" onclick="makeAdmin()" disabled>设为管理员</button>
     <p id="result" style="margin-top:16px;font-size:14px"></p>
+    <p style="margin-top:24px;font-size:12px;color:#999">
+      如果仍然失败，请在<br>
+      <a href="https://supabase.com/dashboard/project/edagdtolpmspurnohxkw/sql/new" target="_blank">SQL Editor</a><br>
+      运行: <code>CREATE OR REPLACE FUNCTION set_admin(target_id UUID) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN UPDATE profiles SET role = 'admin' WHERE id = target_id; END; $$;</code>
+    </p>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = 'https://edagdtolpmspurnohxkw.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_U1ZxM-iEhXxPH4imV2g2AA_Lvqpsri9';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient('https://edagdtolpmspurnohxkw.supabase.co','sb_publishable_U1ZxM-iEhXxPH4imV2g2AA_Lvqpsri9');
 
 async function makeAdmin() {
   const btn = document.getElementById('btn');
@@ -33,21 +34,23 @@ async function makeAdmin() {
   btn.textContent = '处理中...';
   
   const {data:{session}} = await supabase.auth.getSession();
-  if (!session) {
-    result.innerHTML = '<span style="color:red">请先<a href="auth.html">登录</a></span>';
-    btn.disabled = false;
-    btn.textContent = '设为管理员';
-    return;
-  }
+  if (!session) { result.innerHTML='<span style="color:red">请先<a href="auth.html">登录</a></span>'; btn.disabled=false; btn.textContent='设为管理员'; return; }
   
   const uid = session.user.id;
   
-  const {error} = await supabase.from('profiles').update({role:'admin'}).eq('id', uid);
+  // 方式1: 用 SECURITY DEFINER 函数绕过 RLS
+  let {error} = await supabase.rpc('set_admin', {target_id: uid});
+  
+  // 方式2: 如果函数不存在，用 upsert
+  if (error) {
+    const username = session.user.user_metadata?.username || session.user.email;
+    const {error: e2} = await supabase.from('profiles').upsert({id:uid, username:username, role:'admin'}, {onConflict:'id'});
+    error = e2;
+  }
   
   if (error) {
-    result.innerHTML = '<span style="color:red">失败: '+error.message+'<br>请确认已在 SQL Editor 执行了修复语句</span>';
-    btn.disabled = false;
-    btn.textContent = '重试';
+    result.innerHTML = '<span style="color:red">更新失败: '+error.message+'<br>请在下方 SQL Editor 运行函数创建语句后重试</span>';
+    btn.disabled = false; btn.textContent = '重试';
   } else {
     result.innerHTML = '<span style="color:green;font-size:18px">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
     btn.textContent = '完成';
@@ -58,15 +61,9 @@ async function makeAdmin() {
   const {data:{session}} = await supabase.auth.getSession();
   const btn = document.getElementById('btn');
   const msg = document.getElementById('msg');
-  if (!session) {
-    msg.innerHTML = '请先<a href="auth.html">登录</a>';
-    btn.textContent = '去登录';
-    btn.onclick = ()=>location.href='auth.html';
-  } else {
-    msg.textContent = '已登录，点击按钮设为管理员';
-    btn.textContent = '设为管理员';
-  }
   btn.disabled = false;
+  if (!session) { msg.innerHTML='请先<a href="auth.html">登录</a>'; btn.textContent='去登录'; btn.onclick=()=>location.href='auth.html'; }
+  else { msg.textContent='已登录，点击设为管理员'; btn.textContent='设为管理员'; }
 })();
 </script>
 </body>
