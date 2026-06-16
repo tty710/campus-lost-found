@@ -14,9 +14,9 @@
 </header>
 <div class="container" style="max-width:500px;margin-top:60px">
   <div class="card" style="text-align:center">
-    <h2 id="title">管理员设置</h2>
-    <p id="msg" style="margin:16px 0">请先确保已登录，然后点击下方按钮</p>
-    <button class="btn btn-primary btn-lg" id="btn" onclick="makeAdmin()">设为管理员</button>
+    <h2>管理员设置</h2>
+    <p style="margin:16px 0" id="msg">检查登录状态...</p>
+    <button class="btn btn-primary btn-lg" id="btn" onclick="makeAdmin()" disabled>设为管理员</button>
     <p id="result" style="margin-top:16px;font-size:14px"></p>
   </div>
 </div>
@@ -34,7 +34,7 @@ async function makeAdmin() {
   
   const {data:{session}} = await supabase.auth.getSession();
   if (!session) {
-    result.innerHTML = '<span style="color:red">请先<a href="auth.html">登录</a>！</span>';
+    result.innerHTML = '<span style="color:red">请先<a href="auth.html">登录</a></span>';
     btn.disabled = false;
     btn.textContent = '设为管理员';
     return;
@@ -43,39 +43,39 @@ async function makeAdmin() {
   const uid = session.user.id;
   const username = session.user.user_metadata?.username || session.user.email;
   
-  // 先检查或创建 profile
-  const {data:profile} = await supabase.from('profiles').select('id,role').eq('id',uid).single();
+  // 先尝试更新（大多数情况已有 profile）
+  const {error:updErr} = await supabase.from('profiles').update({role:'admin'}).eq('id',uid);
   
-  if (!profile) {
-    result.textContent = '创建 profile...';
-    const {error:insErr} = await supabase.from('profiles').insert({id:uid, username:username, role:'admin'});
-    if (insErr) {
-      result.innerHTML = '<span style="color:red">创建失败: '+insErr.message+'</span>';
-    } else {
-      result.innerHTML = '<span style="color:green">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
-    }
-  } else {
-    // 更新角色
-    const {error:updErr} = await supabase.from('profiles').update({role:'admin'}).eq('id',uid);
-    if (updErr) {
-      result.innerHTML = '<span style="color:red">更新失败: '+updErr.message+'</span>';
-    } else {
-      result.innerHTML = '<span style="color:green">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
-    }
+  if (!updErr) {
+    result.innerHTML = '<span style="color:green;font-size:18px">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
+    btn.textContent = '完成';
+    return;
   }
   
-  btn.disabled = false;
-  btn.textContent = '设置完成';
+  // 更新失败，尝试创建
+  const {error:insErr} = await supabase.from('profiles').insert({id:uid, username:username, role:'admin'});
+  if (insErr) {
+    result.innerHTML = '<span style="color:red">失败: '+insErr.message+'</span>';
+    btn.disabled = false;
+    btn.textContent = '重试';
+  } else {
+    result.innerHTML = '<span style="color:green;font-size:18px">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
+  }
 }
 
-// 自动检测登录状态
 (async()=>{
   const {data:{session}} = await supabase.auth.getSession();
+  const btn = document.getElementById('btn');
+  const msg = document.getElementById('msg');
   if (!session) {
-    document.getElementById('msg').innerHTML = '请先<a href="auth.html">登录</a>或<a href="index.html">刷新首页</a>重新登录';
-    document.getElementById('btn').textContent = '去登录';
-    document.getElementById('btn').onclick = ()=>location.href='auth.html';
+    msg.innerHTML = '请先<a href="auth.html">登录</a>';
+    btn.textContent = '去登录';
+    btn.onclick = ()=>location.href='auth.html';
+  } else {
+    msg.textContent = '已登录，点击按钮设为管理员';
+    btn.textContent = '设为管理员';
   }
+  btn.disabled = false;
 })();
 </script>
 </body>
