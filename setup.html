@@ -16,11 +16,6 @@
     <p id="msg" style="margin:16px 0">检查登录...</p>
     <button class="btn btn-primary btn-lg" id="btn" onclick="makeAdmin()" disabled>设为管理员</button>
     <p id="result" style="margin-top:16px;font-size:14px"></p>
-    <p style="margin-top:24px;font-size:12px;color:#999">
-      如果仍然失败，请在<br>
-      <a href="https://supabase.com/dashboard/project/edagdtolpmspurnohxkw/sql/new" target="_blank">SQL Editor</a><br>
-      运行: <code>CREATE OR REPLACE FUNCTION set_admin(target_id UUID) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN UPDATE profiles SET role = 'admin' WHERE id = target_id; END; $$;</code>
-    </p>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -37,19 +32,19 @@ async function makeAdmin() {
   if (!session) { result.innerHTML='<span style="color:red">请先<a href="auth.html">登录</a></span>'; btn.disabled=false; btn.textContent='设为管理员'; return; }
   
   const uid = session.user.id;
+  const email = session.user.email;
   
-  // 方式1: 用 SECURITY DEFINER 函数绕过 RLS
-  let {error} = await supabase.rpc('set_admin', {target_id: uid});
+  // 步骤: 删掉旧 profile → 重建带 admin
+  const {error:delErr} = await supabase.from('profiles').delete().eq('id', uid);
   
-  // 方式2: 如果函数不存在，用 upsert
-  if (error) {
-    const username = session.user.user_metadata?.username || session.user.email;
-    const {error: e2} = await supabase.from('profiles').upsert({id:uid, username:username, role:'admin'}, {onConflict:'id'});
-    error = e2;
-  }
+  const {error:insErr} = await supabase.from('profiles').insert({
+    id: uid,
+    username: email,
+    role: 'admin'
+  });
   
-  if (error) {
-    result.innerHTML = '<span style="color:red">更新失败: '+error.message+'<br>请在下方 SQL Editor 运行函数创建语句后重试</span>';
+  if (insErr) {
+    result.innerHTML = '<span style="color:red">失败: '+insErr.message+'</span>';
     btn.disabled = false; btn.textContent = '重试';
   } else {
     result.innerHTML = '<span style="color:green;font-size:18px">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
