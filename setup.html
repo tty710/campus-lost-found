@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理员设置</title>
+<link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <a href="index.html" class="logo">校园失物招领</a>
+  </div>
+</header>
+<div class="container" style="max-width:500px;margin-top:60px">
+  <div class="card" style="text-align:center">
+    <h2 id="title">管理员设置</h2>
+    <p id="msg" style="margin:16px 0">请先确保已登录，然后点击下方按钮</p>
+    <button class="btn btn-primary btn-lg" id="btn" onclick="makeAdmin()">设为管理员</button>
+    <p id="result" style="margin-top:16px;font-size:14px"></p>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://edagdtolpmspurnohxkw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_U1ZxM-iEhXxPH4imV2g2AA_Lvqpsri9';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function makeAdmin() {
+  const btn = document.getElementById('btn');
+  const result = document.getElementById('result');
+  btn.disabled = true;
+  btn.textContent = '处理中...';
+  
+  const {data:{session}} = await supabase.auth.getSession();
+  if (!session) {
+    result.innerHTML = '<span style="color:red">请先<a href="auth.html">登录</a>！</span>';
+    btn.disabled = false;
+    btn.textContent = '设为管理员';
+    return;
+  }
+  
+  const uid = session.user.id;
+  const username = session.user.user_metadata?.username || session.user.email;
+  
+  // 先检查或创建 profile
+  const {data:profile} = await supabase.from('profiles').select('id,role').eq('id',uid).single();
+  
+  if (!profile) {
+    result.textContent = '创建 profile...';
+    const {error:insErr} = await supabase.from('profiles').insert({id:uid, username:username, role:'admin'});
+    if (insErr) {
+      result.innerHTML = '<span style="color:red">创建失败: '+insErr.message+'</span>';
+    } else {
+      result.innerHTML = '<span style="color:green">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
+    }
+  } else {
+    // 更新角色
+    const {error:updErr} = await supabase.from('profiles').update({role:'admin'}).eq('id',uid);
+    if (updErr) {
+      result.innerHTML = '<span style="color:red">更新失败: '+updErr.message+'</span>';
+    } else {
+      result.innerHTML = '<span style="color:green">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
+    }
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '设置完成';
+}
+
+// 自动检测登录状态
+(async()=>{
+  const {data:{session}} = await supabase.auth.getSession();
+  if (!session) {
+    document.getElementById('msg').innerHTML = '请先<a href="auth.html">登录</a>或<a href="index.html">刷新首页</a>重新登录';
+    document.getElementById('btn').textContent = '去登录';
+    document.getElementById('btn').onclick = ()=>location.href='auth.html';
+  }
+})();
+</script>
+</body>
+</html>
