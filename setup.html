@@ -41,25 +41,16 @@ async function makeAdmin() {
   }
   
   const uid = session.user.id;
-  const username = session.user.user_metadata?.username || session.user.email;
   
-  // 先尝试更新（大多数情况已有 profile）
-  const {error:updErr} = await supabase.from('profiles').update({role:'admin'}).eq('id',uid);
+  const {error} = await supabase.from('profiles').update({role:'admin'}).eq('id', uid);
   
-  if (!updErr) {
-    result.innerHTML = '<span style="color:green;font-size:18px">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
-    btn.textContent = '完成';
-    return;
-  }
-  
-  // 更新失败，尝试创建
-  const {error:insErr} = await supabase.from('profiles').insert({id:uid, username:username, role:'admin'});
-  if (insErr) {
-    result.innerHTML = '<span style="color:red">失败: '+insErr.message+'</span>';
+  if (error) {
+    result.innerHTML = '<span style="color:red">失败: '+error.message+'<br>请确认已在 SQL Editor 执行了修复语句</span>';
     btn.disabled = false;
     btn.textContent = '重试';
   } else {
     result.innerHTML = '<span style="color:green;font-size:18px">管理员设置成功！<br><a href="admin.html">进入管理后台</a></span>';
+    btn.textContent = '完成';
   }
 }
 
